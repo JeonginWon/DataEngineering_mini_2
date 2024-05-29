@@ -109,5 +109,5 @@ Root Mean Squared Logarithmic Error
 매출액의 분포가 왜곡 성향을 가짐 
 → 왜곡된 값을 정규 분포 형태로 바꾸는 가장 일반적인 방법인 로그를 적용해서 변환
 
-![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/94cbcb92-8bd8-4a34-9a32-a748300f9772/6704cb6d-a812-4490-b5a4-37502a9a75f1/Untitled.png)
+![image](https://github.com/pladata-encore/DE31-2st_team4/assets/122220184/5cdb33f8-bb8c-402b-a91c-b3a2058a35a5)
 
