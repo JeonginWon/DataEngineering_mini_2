@@ -59,11 +59,13 @@ https://www.hankyung.com/article/202205030701i
     1. 변수 간 상관관계 분석
     → 매출금액과 상관관계가 높은 피쳐는 유사업종점포수, 개업점포수, 폐업점포수, 당월매출금액, 직장인구 수, 유동인구 수 
         
-        ![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/94cbcb92-8bd8-4a34-9a32-a748300f9772/6209f0fb-c421-40b2-88f1-f93109646307/Untitled.png)
+        ![Untitled](https://github.com/pladata-encore/DE31-2st_team4/assets/122220184/ca8c1c3e-7ec8-4b48-8760-60adac27ac99)
+
         
     2.  y값과의 상관관계 분석  (랜덤포레스트 모델 돌려서 변수 중요도 확인)
     
-    ![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/94cbcb92-8bd8-4a34-9a32-a748300f9772/2bf140de-d3bb-4dd8-8d44-cc73f2e6c2e1/Untitled.png)
+   ![Untitled (1)](https://github.com/pladata-encore/DE31-2st_team4/assets/122220184/761a1ed0-d107-40b0-bdac-6bab71844cfb)
+
     
 3. 분석에 사용할 컬럼 선택
     1. 상관관계가 너무 작은 컬럼 제외
@@ -94,7 +96,8 @@ https://www.hankyung.com/article/202205030701i
     - 수치형 데이터로 수치형 데이터(y값)를 예측하려고 하는 문제이기 때문에
     - 시계열 데이터이기 때문에 → 선형 관계의 핵심
 
-![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/94cbcb92-8bd8-4a34-9a32-a748300f9772/05a7f141-2f25-463b-bf25-dccead072964/Untitled.png)
+![Untitled (2)](https://github.com/pladata-encore/DE31-2st_team4/assets/122220184/1034cc2b-0fba-4c6c-b1c9-ac76d4b015df)
+
 
 — 중간 EDA
 
@@ -110,4 +113,132 @@ Root Mean Squared Logarithmic Error
 → 왜곡된 값을 정규 분포 형태로 바꾸는 가장 일반적인 방법인 로그를 적용해서 변환
 
 ![image](https://github.com/pladata-encore/DE31-2st_team4/assets/122220184/5cdb33f8-bb8c-402b-a91c-b3a2058a35a5)
+
+log 변환 전후 비교 : 
+
+![Untitled (3)](https://github.com/pladata-encore/DE31-2st_team4/assets/122220184/a6051894-13ac-4fc8-bf76-15b7b53b8f4e)
+
+![image](https://github.com/pladata-encore/DE31-2st_team4/assets/122220184/2080b51d-31c3-4150-9aed-d4cb5d53a819)
+
+![Untitled (4)](https://github.com/pladata-encore/DE31-2st_team4/assets/122220184/3aa9a57b-c396-4939-8d5c-1c71b64b4c27)
+
+![image](https://github.com/pladata-encore/DE31-2st_team4/assets/122220184/99da3b2c-5ca3-4cbe-bc0a-e9d502d746c5)
+
+→ 오류 값이 확연히 줄어들었음. 
+
+매출액을 실제보다 더 크게 예측하여 발생하는 손실 문제를 해결할 수 있음.
+이 log변환 데이터를 바탕으로 릿지 회귀를 실시함.
+
+b. 릿지 회귀 
+
+- 릿지 회귀는 선형 회귀에 L2 규제를 추가한 모델. L2 규제는 상대적으로 큰 회귀 계수 값의 예측 영향도를 감소시키기 위해서 회귀 계수값을 더 작게 만드는 규제 모델 *→ 피처를 선택하기 위해서라면 예측 영향력이 작은 피처의 회귀 계수를 0으로 만드는 L1규제 라쏘 모델을 사용해야 하는 건 아닌지???*
+    - **실제 매출액보다 더 크게 예측을 하면 발생할 피해(손실)이 더 악영향을 준다고 판단.
+    즉, 매출액을 실제보다 더 적게 예측하는 건 괜찮을 수 있지만, 더 크게 예측하는 것을 방지하고자 L2 규제를 사용**
+
+- 릿지 회귀 결과
+![image](https://github.com/pladata-encore/DE31-2st_team4/assets/122220184/274e4fd6-a64d-4314-9fd0-2cd4f9dee58a)
+
+1. 모델별 / 스케일러별 특징 & 선택 이유 
+    1. 배깅 방식 ㅡ 랜덤포레스트
+        
+        각각의 분류기가 모두 같은 Decision Tree 알고리즘 기반으로, 데이터 샘플링을 다르게 가져가면서 개별적으로 학습을 수행해 보팅을 진행한 결과로 최총 예측 결과를 선정하는 방식
+        
+        랜덤 포레스트는 앙상블 알고리즘 중 비교적 빠른 수행 속도를 가지고 있으며, 높은 예측 성능을 보이고 있고 쉽고 직관적인 구조를 갖고 있다. 
+        
+        스케일링 방식을 나누어서 진행, 비교해 보았음. 
+        
+        - Standard Scaler : 개별 피처를 평균이 0이고 분산이 1인 값으로 표준화
+        - MinMax Scaler : 데이터값을 0과 1 사이의 범위 값으로 변환
+    2. 부스팅 방식 ㅡ catboost, xgboost, lightgbm
+    여러 개의 분류기가 순차적으로 학습을 수행하되, 앞에서 학습한 분류기가 예측이 틀린 데이터에 대해서는 올바르게 예측할 수 있도록 다음 분류기에 가중치를 부여하는 알고리즘. 
+        
+        특히 그래디언트 부스트 머신은 가중치 업데이트를 경사 하강법을 이용해 오류식을 최소화하는 방향으로 반복적으로 학습한다는 특징을 가짐
+        
+    - XGBoost : GBM의 단점인 느린 수행 시간 및 과적합 규제의 부재 문제를 해결해 각광 받는 알고리즘.
+    - LightGBM : XGBoost 대비해서도 더 빠른 학습과 예측 수행 시간, 메모리 사용량이 더 적음
+    - Catboost : 처음 데이터셋은 성별/시간대/연령대/요일이 모두 카테고리로 이루어진 범주형 데이터가 대부분이였기 때문에 범주형 데이터 처리에 특화된 모델인 캣부스트를 사용하려 했으나 전처리 및 추가적인 데이터 수집을 통해 수치형 데이터 세트로 통합되어 
+    캣부스트는 다른 부스팅 알고리즘과의 성능 비교를 해 보고자 수행함
+2.  모델별 성능 설명 및 비교
+    1. ***모델별로 learning curve , 예측 vs 정답값 비교 시각화 자료 필요***
+
+![image](https://github.com/pladata-encore/DE31-2st_team4/assets/122220184/905ba7cb-abbb-4da0-87b0-6f3a314e29fe)
+
+3. 하이퍼 파라미터 튜닝 → 어떻게 했는지 취합 필요
+    3-1. 랜덤포레스트 ㅡ Grid Search
+
+![image](https://github.com/pladata-encore/DE31-2st_team4/assets/122220184/ac89de97-faa3-4e1c-a016-bca7c404f42f)
+
+3. 부스팅 방식 ㅡ Optuna / 그리드 서치
+    3-2. Catboost 에 optuna 활용
+
+   ![image](https://github.com/pladata-encore/DE31-2st_team4/assets/122220184/ddb7b1ae-85e0-49cb-b5fb-2b684019e6d4)
+
+4. 교차 검증
+
+머신러닝 모델을 만들고 모델의 성능을 높이기  데이터셋을 학습용 데이터(train_set)와 테스트 데이터(test_set)으로 나눕니다.
+
+사이킷런의 경우 train_test_split 메소드를 통해 간단하게 데이터를 나눌 수 있습니다.
+
+이 때 테스트 데이터를 사용하여 모델 검증을 하게 됩니다. 하지만 고정된 테스트 데이터를 가지고 모델의 성능을 확인하고, 파라미터를 수정하는 과정을 반복하면, 결국 모델은 테스트 데이터에만 
+잘 동작하는 모델이 될 수 밖에 없습니다.
+
+이렇게 머신러닝에서 테스트 데이터를 과하게 잘 학습하여 다른 실제 데이터를 가지고 예측을 수행하면 정확성이 떨어지는 것을 과적합이라 하며 일반화 성능이 떨어진다고 볼 수 있습니다.
+
+이러한 과적합 방지를 위해 교차 검증 과정이 필요합니다
+
+교차 검증이란 주어진 데이터셋에 학습된 알고리즘이 얼마나 잘 일반화되어있는지 평가하기 위한 방법이며 데이터를 여러 번 반복해서 나누고 여러 번의 모델 학습 및 검증 과정을 거칩니다.
+
+이러한 교차 검증을 활용하여 데이터셋 내의 모든 데이터를 훈련에 사용할 수 있고, 모델의 성능과 정확도를 향상시킬 수 있어 보다 일반화 된 모델을 만드는 것이 가능합니다.
+
+또한 데이터 부족으로 인한 과소적합을 방지할 수 있고 테스트 데이터가 편중되는 것을 
+방지할 수 있습니다.
+
+1. Kfold(K겹 교차검증)
+K겹 교차 검증 과정은 먼저 데이터셋을 훈련 세트와 테스트 세트로 나눕니다.
+그리고 훈련 세트를 이름과 같이 K개의 폴드 세트로 나누고 이 폴드 세트를 학습용 데이터와 
+검증용 데이터로 나누게 됩니다. 모델은 K-1개를 학습 세트로 사용하고 나머지 하나를 검증 데이터 세트로 설정하여 평가를 진행하는데, 이 때 분리된 K개의 폴드 세트에 대하여 검증 데이터세틀 변경하며 K번의 검증을 수행하고 모델을 학습한 뒤 K번의 평가 결과에 대한 평균을 내어
+최종 모델의 성능을 구합니다.
+
+2. cross_val_score
+cross_val_score 는 교차 검증을 위해 사이킷런에서 제공하는 함수이며 매개변수로 모델명, 훈련 데이터, 타겟 데이터, cv가 입력되며 여기서 cv는 폴드 수를 의미합니다.
+예시로 위 XGBoost의 최적 파라미터를 찾기 위한 Grid Search 과정에서 cv = 5 라는 값이 입력된 것을 확인할 수 있습니다. 이는 XGBoost에서 기본적으로 제공하는 K겹 교차검증 메소드를 사용하여 5겹 교차검증을 진행하겠다는 의미를 나타냅니다.
+
+## 6. 창업 예측 분석
+
+1. inverse_transform을 통해 스케일링된 값을 원본 값으로 변환하여 예측 매출액 구하기 
+2. 행정동별 median값 계산하여 컬럼으로 추가하기 
+3. a와 b를 비교하여 예측 매출액이 동별 중앙값보다 큰 지 여부에 따라 창업 성공 컬럼에 성공(1)/실패(0) 으로 처리
+4. 창업 성공 컬럼의 평균값 계산하여 각 동별 창업 성공률 도출
+
+
+# 최종 인사이트
+
+1) 예측 매출액을 통한 창업 성공/실패 여부판단
+
+2) <창업 성공예상점수> 방정식 
+
+# 1) 창업 성공/실패 여부 판단 모델
+
+[Minmax_RFmodel.ipynb](https://prod-files-secure.s3.us-west-2.amazonaws.com/94cbcb92-8bd8-4a34-9a32-a748300f9772/6d072eb7-d225-4f7b-8337-1438b200a6ec/Minmax_RFmodel.ipynb)
+
+![image](https://github.com/pladata-encore/DE31-2st_team4/assets/122220184/fbc91e49-a4ff-4e50-904d-121faef90eb2)
+
+- 모델링 목적 
+창업 성공 여부를 결정 짓기 위한 매출액의 예측값이
+- 모델 평가
+    - 정확도 97%
+    - y값 매출액 단위 때문에 MSE 값의 단위도 크게 잡힌다는 점 설명
+- 변수 [창업 성공/실패] 도출 과정
+    - 행정동별 월 매출액 median 값과 비교하여 창업 성공/실패 여부를 도출했다
+    - 그러나 창업 성공 여부를 판단하기 위해 매출액만 고려하는 것은 아니라고 생각해서 다른 피쳐들의 영향력을 반영하기 위한 방법을 고민했다
+
+# 2) <창업 성공예상점수> 방정식
+- 점포당_당월평균매출금액(Predicted)에 대한 파생변수들의 상관관계를 분석하여 가중치 설정
+- 창업 성공 예상 점수 컬럼 추가
+
+  ![image](https://github.com/pladata-encore/DE31-2st_team4/assets/122220184/c3bfa597-a159-4233-a6ea-5890ebf704d7)
+
+  ![image](https://github.com/pladata-encore/DE31-2st_team4/assets/122220184/0f28a480-ddc4-4866-bd1c-5a9e3224e6eb)
+
+
 
